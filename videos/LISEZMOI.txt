@@ -1,0 +1,3 @@
+Mets ici les vidéos au format .mp4 (H.264) : 01.mp4, 02.mp4, 03.mp4.
+Conseil : 5 à 15 secondes chacune, en 720p, moins de 15 Mo chacune.
+Pour garder le son d'une vidéo, mets  sound:true  dans js/config.js.

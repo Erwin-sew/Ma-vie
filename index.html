@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Un film pour Allegra 💙</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;1,300;1,600&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="f" viewBox="-50 -50 100 100"><g fill="currentColor"><ellipse cy="-26" rx="17" ry="25"/><ellipse cy="-26" rx="17" ry="25" transform="rotate(72)"/><ellipse cy="-26" rx="17" ry="25" transform="rotate(144)"/><ellipse cy="-26" rx="17" ry="25" transform="rotate(216)"/><ellipse cy="-26" rx="17" ry="25" transform="rotate(288)"/></g><circle r="10" fill="#ffe9a8"/></symbol></svg>
+<div class="bg" id="bgA"></div><div class="bg" id="bgB"></div>
+<canvas id="cv"></canvas>
+<div id="blush"></div>
+<div id="ph"></div>
+<div id="credits"></div>
+<div id="stage"><div id="chap"></div><div id="txt"></div></div>
+<div id="grain"></div>
+<div id="flash"></div>
+<div class="bar top"></div><div class="bar bot"></div>
+<div id="prog"><i></i></div>
+<div id="ctl"><button id="bP" aria-label="Pause">⏸</button><button id="bS" aria-label="Son">🔊</button></div>
+
+<div class="card" id="lock">
+  <svg viewBox="-50 -50 100 100"><use href="#f"/></svg>
+  <small>Pour Allegra 💙</small>
+  <h1>Ton film s’ouvre<br>à minuit</h1>
+  <p>Encore un tout petit peu de patience… Le 13 novembre, tout sera prêt pour toi.</p>
+  <div id="lc"></div>
+</div>
+<div class="card" id="poster">
+  <svg viewBox="-50 -50 100 100"><use href="#f"/></svg>
+  <small>Winner présente</small>
+  <h1>Un film pour<br>Allegra</h1>
+  <p>Mets le son, installe-toi confortablement, et laisse-toi porter. Touche l’écran pour passer à la suite.</p>
+  <button class="go" id="go">Lancer le film</button>
+</div>
+<div class="card hide" id="endc">
+  <h2>Fin</h2><small>mais notre histoire continue 💙</small>
+  <div><button class="go" id="again">Revoir le film</button></div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/script.js"></script>
+</body>
+</html>
