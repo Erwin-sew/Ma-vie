@@ -76,7 +76,7 @@ async function scene(s,id){
   var hasM=s.media&&s.media.length;
   if(hasM)s.media.forEach(function(m){if(m.type!=="video"){var im=new Image();im.src=m.src}});
   if(s.chap){$("chap").innerHTML="<small>"+s.chap[0]+"</small><b>"+s.chap[1]+"</b>";$("chap").className="show";await wait(3400);$("chap").className="";await wait(1200)}
-  if(hasM)$("stage").classList.add("withm");
+  if(hasM||s.low)$("stage").classList.add("withm");
   var prevText="";
   for(var k=0;k<s.lines.length;k++){
     if(id!==runId)return;
@@ -105,10 +105,15 @@ async function credits(id){
 }
 async function film(){
   var id=++runId;$("endc").classList.add("hide");document.body.classList.add("film");$("txt").innerHTML="";
-  for(var i=0;i<S.length;i++){
+  var onlyFinale=location.search.indexOf("cake")>-1;
+  for(var i=onlyFinale?S.length:0;i<S.length;i++){
     if(id!==runId)return;
     $("prog").firstElementChild.style.width=(i/(S.length+2)*100)+"%";
     await scene(S[i],id);
+  }
+  if(CONFIG.finale!==false){
+    if(id!==runId)return;await constellation(id);
+    if(id!==runId)return;await cake(id);
   }
   if(id!==runId)return;await credits(id);
   if(id!==runId)return;if(CONFIG.bonus)await scene(CONFIG.bonus,id);
@@ -129,6 +134,7 @@ function frame(t){
   if(T.fw||fw.length){x.globalCompositeOperation="destination-out";x.fillStyle="rgba(0,0,0,.22)";x.fillRect(0,0,W,H);x.globalCompositeOperation="source-over"}else x.clearRect(0,0,W,H);
   sa+=(T.stars-sa)*.02;
   if(sa>.01)stars.forEach(function(s){s.y-=s.v*.08;if(s.y<0)s.y=H;x.globalAlpha=sa*(.4+.6*Math.abs(Math.sin(t/900+s.p)));x.fillStyle="#fff";x.beginPath();x.arc(s.x,s.y,s.r,0,6.283);x.fill()});
+  if(CN.on)drawCons(t);
   if(T.bloom&&t-lastB>(W<600?800:500)&&fl2.length<26){lastB=t;fl2.push({x:Math.random()*W,y:H*(.35+Math.random()*.6),s:34+Math.random()*(W<600?36:60),g:0,r:Math.random()*6,c:pc[Math.floor(Math.random()*pc.length)]})}
   fl2=fl2.filter(function(f){if(T.bloom&&f.g<1)f.g+=.012;if(!T.bloom)f.g-=.008;if(f.g<=0)return false;flower(f,Math.min(f.g,1)*.75);return true});
   if(T.fw&&t-lastF>600){lastF=t;launchFW(W*(.15+Math.random()*.7),H*(.12+Math.random()*.38))}
@@ -145,6 +151,88 @@ function frame(t){
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+
+
+/* ---------- Constellation du prénom ---------- */
+var CN={on:false,out:false,fade:1,t0:null,pts:[],pr:[]};
+function buildCons(){
+  var oc=document.createElement("canvas");oc.width=W;oc.height=H;var o=oc.getContext("2d");
+  var fs=Math.min(W*.3,H*.26,240),NAME="Allegra";
+  o.font="italic 600 "+fs+"px Fraunces,Georgia,serif";
+  while(o.measureText(NAME).width>W*.88&&fs>30){fs-=6;o.font="italic 600 "+fs+"px Fraunces,Georgia,serif"}
+  o.textAlign="center";o.textBaseline="middle";o.fillStyle="#fff";o.fillText(NAME,W/2,H*.36);
+  var d=o.getImageData(0,0,W,H).data,step=W<600?7:9,pts,y,xx;
+  do{pts=[];for(y=0;y<H;y+=step)for(xx=0;xx<W;xx+=step)if(d[(y*W+xx)*4+3]>128)pts.push({tx:xx,ty:y,sx:Math.random()*W,sy:Math.random()*H,dl:Math.random()*1500,r:2+Math.random()*2.2,ph:Math.random()*6,x:0,y:0,a:0});step+=2}while(pts.length>300);
+  var lim=(step-2)*1.45,pr=[],i,j;
+  for(i=0;i<pts.length&&pr.length<900;i++)for(j=i+1;j<pts.length;j++){var dx=pts[i].tx-pts[j].tx,dy=pts[i].ty-pts[j].ty;if(dx*dx+dy*dy<lim*lim)pr.push([i,j])}
+  CN.pts=pts;CN.pr=pr;
+}
+function drawCons(t){
+  if(CN.t0===null)CN.t0=t;var tt=t-CN.t0,P=CN.pts,i,p;
+  if(CN.out)CN.fade=Math.max(0,CN.fade-.012);
+  for(i=0;i<P.length;i++){p=P[i];var a=Math.min(Math.max((tt-p.dl)/2600,0),1),e=1-Math.pow(1-a,3);p.x=p.sx+(p.tx-p.sx)*e;p.y=p.sy+(p.ty-p.sy)*e;p.a=a}
+  var lf=Math.min(Math.max((tt-4200)/1500,0),1)*CN.fade;
+  if(lf>0){x.strokeStyle="#bcd9ff";x.lineWidth=1;x.globalAlpha=lf*.45;x.beginPath();CN.pr.forEach(function(q){x.moveTo(P[q[0]].x,P[q[0]].y);x.lineTo(P[q[1]].x,P[q[1]].y)});x.stroke()}
+  for(i=0;i<P.length;i++){p=P[i];x.globalAlpha=CN.fade*(.55+.45*Math.sin(t/260+p.ph))*Math.min(p.a*2,1);x.fillStyle=i%7?"#fff":"#ffe9a8";star(p.x,p.y,p.r)}
+  x.globalAlpha=1;
+}
+async function constellation(id){
+  var bg="radial-gradient(90% 70% at 50% 30%,#0a1640,#02040d 80%)";
+  T.fw=0;T.bloom=0;T.stars=.8;setBg(bg);
+  buildCons();CN.on=true;CN.out=false;CN.fade=1;CN.t0=null;
+  await wait(4600);
+  if(id!==runId){CN.on=false;return}
+  await scene({bg:bg,stars:.8,low:1,lines:[["Parmi toutes les étoiles du ciel…"],["…c’est toi que j’ai choisie.","big"]],hold:2000},id);
+  CN.out=true;await wait(1500);CN.on=false;
+}
+
+/* ---------- Gâteau aux 19 bougies ---------- */
+function cakeSVG(){
+  var s='<svg viewBox="0 0 400 270" aria-hidden="true"><ellipse cx="200" cy="254" rx="192" ry="12" fill="#0b1535"/>'
+   +'<rect x="20" y="170" width="360" height="82" rx="14" fill="#ffd9e4"/><rect x="20" y="170" width="360" height="16" rx="8" fill="#fff"/>'
+   +'<rect x="50" y="108" width="300" height="64" rx="12" fill="#bcd9ff"/><rect x="50" y="108" width="300" height="14" rx="7" fill="#fff"/>'
+   +'<text x="200" y="226" text-anchor="middle" font-size="44" font-style="italic" font-family="Fraunces,Georgia,serif" fill="#4a86e8">19 ans</text>';
+  for(var i=0;i<19;i++){var cx=58+i*15.78;
+    s+='<rect x="'+(cx-3)+'" y="82" width="6" height="28" rx="2" fill="'+(i%2?"#ff8fb1":"#6fa1f0")+'"/>'
+     +'<ellipse class="fm" id="fm'+i+'" cx="'+cx+'" cy="74" rx="4" ry="8"/><circle class="sm" id="sm'+i+'" cx="'+cx+'" cy="64" r="5"/>'}
+  return s+'</svg>';
+}
+function chs(t){var e=$("ch");if(e)e.textContent=t}
+function stopMic(m){if(m.t)clearInterval(m.t);if(m.s)m.s.getTracks().forEach(function(k){k.stop()});if(m.a&&m.a.close)m.a.close()}
+function listen(m,out){
+  if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){chs("Touche le bouton pour souffler.");return}
+  navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:false,autoGainControl:false}}).then(function(s){
+    m.s=s;var AC3=window.AudioContext||window.webkitAudioContext;m.a=new AC3();
+    var src=m.a.createMediaStreamSource(s),an=m.a.createAnalyser();an.fftSize=512;src.connect(an);
+    var buf=new Uint8Array(an.fftSize),base=0,n=0,hot=0;chs("Souffle fort vers ton téléphone… ou touche le bouton");
+    m.t=setInterval(function(){
+      an.getByteTimeDomainData(buf);var sum=0;for(var i=0;i<buf.length;i++){var v=(buf[i]-128)/128;sum+=v*v}
+      var r=Math.sqrt(sum/buf.length);
+      if(n<12){base=Math.max(base,r);n++;return}
+      if(r>Math.max(base*2.5,.1))hot++;else hot=0;
+      if(hot>=3)out();
+    },100);
+  }).catch(function(){chs("Touche le bouton pour souffler.")});
+}
+async function cake(id){
+  var c=$("cake"),mic={};
+  T.fw=0;T.bloom=0;T.stars=.7;setBg("radial-gradient(90% 70% at 50% 60%,#2a1a5a,#06081f 75%)");vol(.2);
+  c.innerHTML=cakeSVG()+'<p id="cp">Fais un vœu, puis souffle sur les bougies 🎂</p><div id="ch">Autorise le micro pour souffler vraiment, ou touche le bouton</div><button class="go" id="blow">Souffler les bougies</button>';
+  c.classList.add("show");
+  await new Promise(function(res){
+    var done=false;
+    function out(){if(done)return;done=true;stopMic(mic);res()}
+    $("blow").onclick=out;
+    listen(mic,out);
+  });
+  for(var k=0;k<19;k++)(function(k){setTimeout(function(){var f=$("fm"+k),s=$("sm"+k);if(f)f.classList.add("off");if(s)s.classList.add("on")},k*110)})(k);
+  $("blow").style.display="none";chs("");
+  await wait(2600);
+  $("cp").textContent="Que tous tes vœux se réalisent, Allegra. 💙";
+  T.fw=1;runFx("boom");runFx("hearts");runFx("sparkles");
+  await wait(6500);
+  c.classList.remove("show");vol(.8);await wait(1300);c.innerHTML="";T.fw=0;
+}
 
 /* ---------- Musique ---------- */
 var AC,master,aud,st=0;
